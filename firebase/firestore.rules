@@ -1,0 +1,7 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Starter uses a backend-only design. Admin SDK still requires backend authorization.
+    match /{document=**} { allow read, write: if false; }
+  }
+}

@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:${EDUMATE_PORT:-8080}:8080"
+    environment:
+      APP_MODE: demo
+      EDUMATE_DATA_DIR: /data
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      GEMINI_MODEL: "${GEMINI_MODEL:-}"
+    volumes:
+      - edumate_data:/data
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 25s
+
+volumes:
+  edumate_data:
