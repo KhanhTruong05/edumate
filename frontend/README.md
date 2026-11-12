@@ -28,4 +28,4 @@ pnpm build
 docker build -f frontend/Dockerfile -t edumate-frontend .
 ```
 
-Nginx phục vụ React tại port 8080 và proxy `/api/`, `/docs`, `/openapi.json`, `/redoc`, `/health` sang `backend:8000`. Template đọc `DEMO_PROXY_TOKEN` ở runtime, không đưa token vào bundle trình duyệt. Docker DNS được resolve lại để backend có thể được tạo lại riêng. Compose chỉ publish cổng frontend trên localhost.
+Nginx phục vụ React tại port 8080 và proxy `/api/`, `/docs`, `/openapi.json`, `/redoc`, `/health` sang `backend:8000`. Template đọc `DEMO_PROXY_TOKEN` ở runtime, không đưa token vào bundle trình duyệt. Docker DNS được resolve lại để backend có thể được tạo lại riêng. Compose publish riêng frontend `8080`, backend `8000`, AI `8001` trên localhost. Dev Vite cố định cổng `5173` và báo lỗi nếu cổng bận.

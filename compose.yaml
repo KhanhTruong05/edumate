@@ -19,12 +19,15 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     environment:
       APP_MODE: demo
+      # Host traffic arrives through the Docker gateway; port is bound to localhost.
+      DEMO_ALLOW_DIRECT_ACCESS: "true"
       EDUMATE_DATA_DIR: /data
       DEMO_PROXY_TOKEN: "${DEMO_PROXY_TOKEN:-edumate-local-demo-proxy}"
       AI_SERVICE_URL: http://ai:8001
-      AI_SERVICE_TOKEN: "${AI_SERVICE_TOKEN:-edumate-local-ai-service}"
     volumes:
       - edumate_data:/data
     networks:
@@ -38,8 +41,9 @@ services:
     build:
       context: .
       dockerfile: ai/Dockerfile
+    ports:
+      - "127.0.0.1:${AI_PORT:-8001}:8001"
     environment:
-      AI_SERVICE_TOKEN: "${AI_SERVICE_TOKEN:-edumate-local-ai-service}"
       GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
       GEMINI_MODEL: "${GEMINI_MODEL:-}"
     networks:

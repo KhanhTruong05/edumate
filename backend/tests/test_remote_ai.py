@@ -13,13 +13,13 @@ def remote_provider(monkeypatch, handler):
     original = httpx.AsyncClient
     monkeypatch.setattr(remote.httpx, 'AsyncClient',
                         lambda **kwargs: original(transport=httpx.MockTransport(handler), **kwargs))
-    return remote.RemoteAIProvider('http://ai:8001', 'test-token')
+    return remote.RemoteAIProvider('http://ai:8001')
 
 
-def test_remote_draft_forwards_sources_and_token(monkeypatch):
+def test_remote_draft_forwards_sources_without_token(monkeypatch):
     def handler(request):
         assert str(request.url) == 'http://ai:8001/drafts'
-        assert request.headers['X-AI-Service-Token'] == 'test-token'
+        assert 'X-AI-Service-Token' not in request.headers
         assert json.loads(request.content)['sources'] == [{'id': 'd:1:b0', 'text': 'Nguồn'}]
         return httpx.Response(200, json={'sections': [{'title': 'Đề xuất', 'text': 'Bản nháp'}],
                                         'claims': [], 'warnings': []})
@@ -53,7 +53,6 @@ def test_remote_timeout_is_domain_error(monkeypatch):
 
 def test_app_uses_remote_ai_when_configured(monkeypatch, tmp_path):
     monkeypatch.setenv('AI_SERVICE_URL', 'http://ai:8001')
-    monkeypatch.setenv('AI_SERVICE_TOKEN', 'test-token')
     app = create_app(tmp_path)
     assert type(app.state.provider).__name__ == 'RemoteAIProvider'
 
@@ -84,11 +83,11 @@ def test_backend_ai_http_flow_preserves_citations_and_audit(app, client, monkeyp
                                 'quote': 'trích dẫn giả' if fake_quote else sources[0]['text']}],
                     'warnings': []}
 
-    ai_app = create_ai(provider=Generator(), token='test-token')
+    ai_app = create_ai(provider=Generator())
     transport = httpx.ASGITransport(app=ai_app)
     original = httpx.AsyncClient
     monkeypatch.setattr(remote.httpx, 'AsyncClient', lambda **kwargs: original(transport=transport, **kwargs))
-    app.state.provider = remote.RemoteAIProvider('http://ai:8001', 'test-token')
+    app.state.provider = remote.RemoteAIProvider('http://ai:8001')
     doc = make_doc(client)
 
     response = client.post('/api/v1/agent/drafts', headers=actor(), json={
@@ -99,3 +98,12 @@ def test_backend_ai_http_flow_preserves_citations_and_audit(app, client, monkeyp
     assert client.get(f'/api/v1/documents/{doc["id"]}', headers=actor()).json()['revision'] == 1
     events = client.get('/api/v1/audit-events', headers=actor()).json()
     assert any(event['action'] == f'agent.{expected}' for event in events)
+
+
+def test_direct_demo_access_when_enabled_for_local_docker(monkeypatch, tmp_path):
+    from fastapi.testclient import TestClient
+    monkeypatch.setenv('DEMO_ALLOW_DIRECT_ACCESS', 'true')
+    client = TestClient(create_app(tmp_path), client=('172.20.0.1', 40000))
+    response = client.get('/api/v1/me', headers={'X-Demo-User': 'teacher-1'})
+    assert response.status_code == 200
+    assert response.json()['id'] == 'teacher-1'

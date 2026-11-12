@@ -23,9 +23,10 @@ def create_app(data_dir: Path | None = None, provider=None) -> FastAPI:
     directory = data_dir or settings['data_dir']
     app.state.db = Database(directory)
     app.state.storage = LocalStorage(directory / 'files')
+    app.state.demo_allow_direct_access = settings['demo_allow_direct_access']
     app.state.demo_proxy_token = settings['demo_proxy_token']
     app.state.provider = provider or (
-        RemoteAIProvider(settings['ai_service_url'], settings['ai_service_token'])
+        RemoteAIProvider(settings['ai_service_url'])
         if settings['ai_service_url'] else GeminiProvider(settings['gemini_key'], settings['gemini_model']))
     seed(app.state.db)
     app.add_middleware(CORSMiddleware, allow_origins=settings['cors'],

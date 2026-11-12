@@ -6,7 +6,7 @@ Repository dùng mô hình **monorepo nhiều service**: mỗi phần có image/
 Trình duyệt → localhost:8080 → frontend (React + Nginx)
                                  ↓ HTTP nội bộ
                               backend (FastAPI + SQLite/file)
-                                 ↓ HTTP nội bộ, có token
+                                 ↓ HTTP nội bộ
                               ai (FastAPI + Gemini)
 ```
 
@@ -23,7 +23,7 @@ docker compose ps
 
 Mở **http://localhost:8080**. Swagger tại **http://localhost:8080/docs**, backend health tại **http://localhost:8080/health**. Chưa cần Gemini key để dùng soạn thảo, Word, nộp, duyệt và báo cáo.
 
-Chỉ frontend publish port trên `127.0.0.1`. Backend 8000 và AI 8001 dùng mạng Docker, không publish ra host. Frontend chờ backend healthy; backend không chờ AI để các chức năng thủ công vẫn sử dụng được khi AI ngừng chạy.
+Cả ba service publish cổng riêng trên `127.0.0.1`: frontend `8080`, backend `8000`, AI `8001`. Backend Swagger tại http://localhost:8000/docs, AI health tại http://localhost:8001/health. Backend vẫn gọi `http://ai:8001` qua mạng Docker. Frontend chờ backend healthy; backend không chờ AI để các chức năng thủ công vẫn sử dụng được khi AI ngừng chạy.
 
 ## Ba Dockerfile
 
@@ -57,6 +57,8 @@ Sao chép `.env.example` ở root thành `.env` nếu chưa có, rồi điền:
 
 ```dotenv
 EDUMATE_PORT=8080
+BACKEND_PORT=8000
+AI_PORT=8001
 GEMINI_API_KEY=khóa_của_bạn
 GEMINI_MODEL=ID_model_được_cấp_quyền
 ```
@@ -69,7 +71,9 @@ docker compose up -d ai
 
 Không cần build lại chỉ để đổi key. Đổi `EDUMATE_PORT=8090` rồi `docker compose up -d frontend` nếu cổng 8080 bận. Docker không đọc `backend/.env`; file đó dành cho dev local.
 
-`AI_SERVICE_TOKEN` xác thực backend → AI. `DEMO_PROXY_TOKEN` xác thực Nginx → backend cho bộ chọn tài khoản demo. Compose có giá trị mẫu để chạy ngay trên localhost; các giá trị này không phải đăng nhập production. Nếu thay token, dùng chuỗi chữ/số/dấu gạch và cập nhật các service liên quan bằng `docker compose up -d`. Nginx ghi đè header token từ trình duyệt; backend không tin forwarded-IP headers.
+`BACKEND_PORT` và `AI_PORT` đổi cổng truy cập từ host; cổng container vẫn là 8000/8001. Sau khi đổi, chạy `docker compose up -d backend ai`.
+
+Backend → AI không yêu cầu token. `DEMO_PROXY_TOKEN` vẫn dùng cho Nginx → backend. Compose bật `DEMO_ALLOW_DIRECT_ACCESS=true` để truy cập backend trực tiếp qua cổng localhost dùng được danh tính demo; chỉ dùng cấu hình này trên máy cá nhân. Các service không có đăng nhập production.
 
 ## Dữ liệu, log và dừng
 

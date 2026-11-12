@@ -9,17 +9,13 @@ class RemoteAIProvider:
     # Key/model live in the AI service; backend health cannot infer their state.
     configured = None
 
-    def __init__(self, url: str, token: str):
+    def __init__(self, url: str):
         self.url = url.rstrip('/')
-        self.token = token
 
     async def draft(self, kind, instructions, sources) -> dict:
-        if not self.token:
-            raise DomainError('AI_NOT_CONFIGURED', 'Chưa cấu hình token kết nối AI service.', 503)
         try:
             async with httpx.AsyncClient(timeout=55) as client:
                 response = await client.post(f'{self.url}/drafts',
-                    headers={'X-AI-Service-Token': self.token},
                     json={'kind': kind, 'instructions': instructions, 'sources': sources})
             if response.status_code == 503 and response.json().get('code') == 'AI_NOT_CONFIGURED':
                 raise DomainError('AI_NOT_CONFIGURED', 'Chưa cấu hình Gemini ở AI service.', 503)

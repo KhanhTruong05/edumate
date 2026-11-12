@@ -1,9 +1,8 @@
 """Optional HTTP entry point. Core provider/schema code remains usable without FastAPI."""
-import hmac
 import os
 from typing import Literal
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -32,16 +31,9 @@ class DraftInput(BaseModel):
         return self
 
 
-def create_app(provider=None, token: str | None = None) -> FastAPI:
-    service_token = token if token is not None else os.getenv('AI_SERVICE_TOKEN', '')
-    if not service_token:
-        raise RuntimeError('Cần AI_SERVICE_TOKEN để chạy AI HTTP service.')
+def create_app(provider=None) -> FastAPI:
     generator = provider or GeminiProvider(os.getenv('GEMINI_API_KEY', ''), os.getenv('GEMINI_MODEL', ''))
     app = FastAPI(title='EduMate AI', docs_url=None, redoc_url=None, openapi_url=None)
-
-    def authorize(x_ai_service_token: str = Header(default='')):
-        if not hmac.compare_digest(x_ai_service_token.encode(), service_token.encode()):
-            raise HTTPException(status_code=403, detail='Invalid service token')
 
     @app.exception_handler(AIError)
     async def ai_error(request: Request, exc: AIError):
@@ -51,7 +43,7 @@ def create_app(provider=None, token: str | None = None) -> FastAPI:
     def health():
         return {'status': 'ok', 'ai_configured': generator.configured}
 
-    @app.post('/drafts', response_model=GeneratedDraft, dependencies=[Depends(authorize)])
+    @app.post('/drafts', response_model=GeneratedDraft)
     async def draft(body: DraftInput):
         return await generator.draft(body.kind, body.instructions, [s.model_dump() for s in body.sources])
 

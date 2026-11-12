@@ -7,8 +7,9 @@ from app.core.errors import DomainError
 
 def current_user(request: Request) -> dict:
     # No passwords are bypassed in production: the application refuses non-demo mode.
-    # Only local clients or the configured internal demo proxy may use this picker.
-    if request.client and request.client.host not in {'127.0.0.1', '::1', 'testclient'}:
+    # Docker publishes only to localhost; its explicit opt-in allows the host gateway.
+    if (not request.app.state.demo_allow_direct_access and request.client
+            and request.client.host not in {'127.0.0.1', '::1', 'testclient'}):
         expected = request.app.state.demo_proxy_token
         supplied = request.headers.get('X-Edumate-Proxy-Token', '')
         if not expected or not hmac.compare_digest(supplied.encode(), expected.encode()):

@@ -1,3 +1,3 @@
 # Run from the repository root. Backend dependencies plus local AI package.
 -r backend/requirements-lock.txt
--e ./ai
+-e ./ai[service]

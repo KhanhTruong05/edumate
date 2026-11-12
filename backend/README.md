@@ -41,8 +41,8 @@ Chạy sau khi đã cài dependency và AI package theo lệnh ở root. Test kh
 docker build -f backend/Dockerfile -t edumate-backend .
 ```
 
-Compose đặt `AI_SERVICE_URL=http://ai:8001` và `AI_SERVICE_TOKEN`; backend dùng `modules/agent/remote.py` để gọi HTTP, validate schema rồi kiểm tra citation. Gemini key không truyền backend trong Compose. Bỏ trống URL để giữ provider local khi chạy dev.
+Dev mặc định gọi `http://127.0.0.1:8001`; Compose đặt `AI_SERVICE_URL=http://ai:8001`, không cần token giữa backend và AI; backend dùng `modules/agent/remote.py` để gọi HTTP, validate schema rồi kiểm tra citation. Gemini key cấu hình ở service AI (`ai/.env` khi dev). Chạy AI ở terminal riêng theo README gốc. Provider local vẫn có thể dùng bằng cách chủ động để trống URL và cấu hình Gemini tại backend.
 
 Backend vẫn cài package `edumate_ai` cho schema/citation và provider local; ba image chưa hoàn toàn độc lập về mã dùng chung. `/health` trả `ai_configured: null` khi dùng remote provider vì key/model ở service AI; xem `/health` của AI trong container để biết trạng thái cấu hình model.
 
-Backend lắng nghe `0.0.0.0:8000` trong container và không publish ra host. Nginx truyền `X-Edumate-Proxy-Token`; backend chỉ chấp nhận kết nối từ container khi token khớp `DEMO_PROXY_TOKEN`. Dev loopback vẫn dùng bộ chọn tài khoản như trước. Đây vẫn là danh tính demo, không thay thế Firebase Auth.
+Backend lắng nghe `0.0.0.0:8000` trong container, Compose publish `127.0.0.1:8000:8000`. Compose bật `DEMO_ALLOW_DIRECT_ACCESS=true` để request từ host qua Docker gateway dùng được bộ chọn danh tính demo. Chỉ bật tùy chọn này khi cổng được giới hạn ở localhost. Mặc định ngoài Compose, backend vẫn chỉ nhận loopback hoặc proxy có `DEMO_PROXY_TOKEN`. Đây vẫn là danh tính demo, không thay thế Firebase Auth.

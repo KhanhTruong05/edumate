@@ -1,5 +1,13 @@
 # Kết quả kiểm tra bộ khung
 
+## Tách cổng và bỏ token AI — 12/11/2026
+
+- Backend: **36 test đạt**; AI: **19 test đạt**. Bao gồm gọi AI không có token, lỗi thiếu Gemini key, citation/audit và truy cập demo trực tiếp qua Docker gateway khi được bật.
+- Compose publish riêng trên localhost: frontend `8080`, backend `8000`, AI `8001`; dev Vite cố định `5173`. Backend dev mặc định gọi AI qua HTTP tại `127.0.0.1:8001`.
+- `docker compose config --quiet` và `git diff --check` đạt. Cả ba image build thành công; TypeScript/Vite build đạt, vẫn có cảnh báo bundle Tiptap/use-client.
+- HTTP smoke test: frontend và API qua Nginx, Swagger/health/API trực tiếp ở backend, AI health đều trả 200. Gọi `/drafts` không gửi token trả `503 AI_NOT_CONFIGURED` khi chưa có Gemini key. Không gọi Gemini thật.
+- Cảnh báo deprecation Starlette TestClient/httpx vẫn còn. Các mục bên dưới là lịch sử kiểm tra trước thay đổi này.
+
 ## Docker ba service — 12/11/2026
 
 - Mỗi phần có `frontend/Dockerfile`, `backend/Dockerfile`, `ai/Dockerfile`; Compose nhận đúng ba service. Root Dockerfile/supervisor của image gộp được bỏ.

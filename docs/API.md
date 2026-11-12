@@ -26,4 +26,4 @@ Endpoint export dùng python-docx và một mẫu cố định, không gọi d�
 
 ## API nội bộ AI
 
-AI container phục vụ `GET /health` và `POST /drafts` trên port 8001. Draft cần header `X-AI-Service-Token`, body `{kind,instructions,sources}` với sources do backend kiểm tra quyền trước. Response là `{sections,claims,warnings}` theo `GeneratedDraft`; backend vẫn kiểm tra citation và lưu run/audit. API này không publish ra host và không thay route frontend `/api/v1/agent/drafts`.
+AI container phục vụ `GET /health` và `POST /drafts` trên port 8001. Draft không yêu cầu token, body `{kind,instructions,sources}` với sources do backend kiểm tra quyền trước. Response là `{sections,claims,warnings}` theo `GeneratedDraft`; backend vẫn kiểm tra citation và lưu run/audit. API này publish tại `127.0.0.1:8001` trong Compose và không thay route frontend `/api/v1/agent/drafts`.
