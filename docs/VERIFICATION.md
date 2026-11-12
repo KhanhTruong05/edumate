@@ -1,5 +1,17 @@
 # Kết quả kiểm tra bộ khung
 
+## Docker ba service — 12/11/2026
+
+- Mỗi phần có `frontend/Dockerfile`, `backend/Dockerfile`, `ai/Dockerfile`; Compose nhận đúng ba service. Root Dockerfile/supervisor của image gộp được bỏ.
+- **35 test backend và 21 test AI đạt** trên host. Có test xuyên backend → AI HTTP qua ASGI transport: giữ nguồn theo quyền, citation đúng/sai, audit và yêu cầu người xem xét.
+- **Cả ba image build thành công**. Compose chạy thử với project riêng `edumate-three-service-check` tại localhost:18080; cả ba container healthy. Frontend TypeScript/Vite build trong Docker thành công; `nginx -t` đạt.
+- Smoke test HTTP qua Nginx đạt: React/assets, docs/OpenAPI, health, chọn danh tính, tạo tài liệu, xuất/tải DOCX, nộp/duyệt và chặn giáo viên khác tải tài liệu.
+- Backend → AI container trả đúng `503 AI_NOT_CONFIGURED` khi thiếu Gemini key và ghi audit failed. AI từ chối request thiếu token. Không gọi Gemini thật.
+- Dừng riêng AI: backend health và API thủ công vẫn hoạt động. Tạo lại riêng backend: Nginx kết nối lại và hồ sơ đã duyệt trong volume vẫn còn.
+- Chạy lại cả hai suite trong backend container Python 3.11 với requirements-lock.txt: **56 test đạt**, xác nhận dependency đã chốt và AI package sau sửa cuối.
+- Review độc lập phát hiện cap 6000 source blocks của service không khớp input từ nhiều document hợp lệ. Đã tái hiện RED rồi sửa theo tổng budget 45000 ký tự; test 6003 blocks hợp lệ đạt, tổng ký tự vượt budget bị từ chối.
+- Vẫn có cảnh báo deprecation TestClient/httpx từ Starlette. Firebase/Gemini thật, tải lớn và triển khai production chưa được kiểm tra.
+
 ## Refactor ba phần — 12/11/2026
 
 - Code AI chuyển sang package độc lập `ai/src/edumate_ai`; backend giữ quyền lấy nguồn, run/audit và chuyển lỗi về API cũ. Frontend không đổi API.

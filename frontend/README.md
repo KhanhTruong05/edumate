@@ -19,4 +19,13 @@ Backend cần chạy tại `http://127.0.0.1:8000`. Có thể đặt `VITE_API_B
 pnpm build
 ```
 
-Dockerfile gốc build frontend với đường dẫn API `/api/v1` và phục vụ cùng cổng qua Nginx.
+`frontend/Dockerfile` build frontend với đường dẫn API `/api/v1` và phục vụ cùng cổng qua Nginx.
+
+## Docker
+
+```sh
+# Từ repository root
+docker build -f frontend/Dockerfile -t edumate-frontend .
+```
+
+Nginx phục vụ React tại port 8080 và proxy `/api/`, `/docs`, `/openapi.json`, `/redoc`, `/health` sang `backend:8000`. Template đọc `DEMO_PROXY_TOKEN` ở runtime, không đưa token vào bundle trình duyệt. Docker DNS được resolve lại để backend có thể được tạo lại riêng. Compose chỉ publish cổng frontend trên localhost.

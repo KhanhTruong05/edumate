@@ -10,6 +10,7 @@ from app.core.errors import DomainError
 from app.infrastructure.database import Database
 from app.infrastructure.local_storage import LocalStorage
 from app.modules.agent.provider import GeminiProvider
+from app.modules.agent.remote import RemoteAIProvider
 from app.seed import seed
 
 
@@ -22,7 +23,10 @@ def create_app(data_dir: Path | None = None, provider=None) -> FastAPI:
     directory = data_dir or settings['data_dir']
     app.state.db = Database(directory)
     app.state.storage = LocalStorage(directory / 'files')
-    app.state.provider = provider or GeminiProvider(settings['gemini_key'], settings['gemini_model'])
+    app.state.demo_proxy_token = settings['demo_proxy_token']
+    app.state.provider = provider or (
+        RemoteAIProvider(settings['ai_service_url'], settings['ai_service_token'])
+        if settings['ai_service_url'] else GeminiProvider(settings['gemini_key'], settings['gemini_model']))
     seed(app.state.db)
     app.add_middleware(CORSMiddleware, allow_origins=settings['cors'],
                        allow_methods=['GET', 'POST', 'PATCH'], allow_headers=['Content-Type', 'X-Demo-User'])

@@ -16,4 +16,7 @@ def config() -> dict:
         ).split(',') if s.strip()],
         'gemini_key': os.getenv('GEMINI_API_KEY', ''),
         'gemini_model': os.getenv('GEMINI_MODEL', ''),
+        'ai_service_url': os.getenv('AI_SERVICE_URL', ''),
+        'ai_service_token': os.getenv('AI_SERVICE_TOKEN', ''),
+        'demo_proxy_token': os.getenv('DEMO_PROXY_TOKEN', ''),
     }

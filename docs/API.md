@@ -1,6 +1,6 @@
 # API chính
 
-Chạy backend và mở `/docs` để xem schema thực tế. Trong demo dùng header `X-Demo-User: teacher-1` hoặc `lead-1` trên kết nối cục bộ.
+Chạy backend và mở `/docs` để xem schema thực tế. Trong demo dùng header `X-Demo-User: teacher-1` hoặc `lead-1` trên kết nối cục bộ hoặc qua Nginx proxy demo được cấu hình trong Compose.
 
 | Method | Route sau `/api/v1` | Mục đích |
 |---|---|---|
@@ -23,3 +23,7 @@ Chạy backend và mở `/docs` để xem schema thực tế. Trong demo dùng h
 Lỗi domain trả `{code,message}`. `403`: sai quyền; `404`: không có dữ liệu hoặc ngoài phạm vi đọc; `409`: revision/trạng thái; `423`: quá hạn; `422`: dữ liệu; `503 AI_NOT_CONFIGURED`: thiếu cấu hình AI. Lỗi Pydantic có cấu trúc `detail` mặc định của FastAPI.
 
 Endpoint export dùng python-docx và một mẫu cố định, không gọi dịch vụ conversion trả phí. Không có endpoint ký hoặc tự chuyển hồ sơ lên trường trong starter.
+
+## API nội bộ AI
+
+AI container phục vụ `GET /health` và `POST /drafts` trên port 8001. Draft cần header `X-AI-Service-Token`, body `{kind,instructions,sources}` với sources do backend kiểm tra quyền trước. Response là `{sections,claims,warnings}` theo `GeneratedDraft`; backend vẫn kiểm tra citation và lưu run/audit. API này không publish ra host và không thay route frontend `/api/v1/agent/drafts`.

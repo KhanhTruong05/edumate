@@ -9,7 +9,7 @@ frontend/  React/Vite + Tiptap
         → SQLite transaction + audit
         → LocalStorage: tệp DOCX
 
-backend agent: collect_sources theo quyền → ai/ edumate_ai → lưu run + audit
+backend agent: collect_sources theo quyền → AI HTTP service (Docker) hoặc provider local → lưu run + audit
 ai package: Gemini REST → Pydantic schemas → verify_claims
 Reports: chọn bản mới nhất mỗi người → tính cùng tập nguồn hợp lệ → lưu snapshot
 ```
@@ -18,11 +18,11 @@ Reports: chọn bản mới nhất mỗi người → tính cùng tập nguồn 
 
 ## Ba phần mã nguồn
 
-`frontend/` chỉ gọi backend. `backend/` quản lý dữ liệu, quyền và nghiệp vụ. `ai/` là package Python `edumate_ai`, chứa provider/prompt, schema đầu ra và kiểm tra citation; không import `app`, không đọc database hoặc biến môi trường.
+`frontend/` chỉ gọi backend. `backend/` quản lý dữ liệu, quyền và nghiệp vụ. `ai/` là package Python `edumate_ai`, chứa provider/prompt, schema đầu ra và kiểm tra citation; không import `app`, không đọc database. Lõi provider không đọc biến môi trường; HTTP entry point `service.py` đọc cấu hình khi chạy riêng.
 
-Backend giữ `modules/agent/tools.py` để lấy nguồn theo quyền, `service.py` để điều phối run/audit, `provider.py` làm adapter chuyển `AIError` thành `DomainError`. Cấu hình Gemini được đọc ở backend rồi truyền vào provider. API `/api/v1/agent/drafts` và luồng người duyệt giữ nguyên.
+Backend giữ `modules/agent/tools.py` để lấy nguồn theo quyền, `service.py` để điều phối run/audit, `provider.py` làm adapter chuyển `AIError` thành `DomainError`. Dev local đọc cấu hình Gemini ở backend rồi truyền vào provider. Trong Compose, Gemini key chỉ ở AI service; backend dùng `RemoteAIProvider` với `AI_SERVICE_URL` và token, validate schema response rồi kiểm tra citation. API `/api/v1/agent/drafts` và luồng người duyệt giữ nguyên.
 
-Cài từ repository root bằng `pip install -r requirements-dev.txt`. Package AI dùng src layout và cài editable cho local; Docker cài package thường từ `/app/ai`. Không cần chỉnh `PYTHONPATH` hoặc chạy service AI riêng. Có thể kiểm thử/phát triển AI độc lập; nếu sau này cần service riêng thì thay adapter backend, không đưa quyền database vào AI.
+Cài từ repository root bằng `pip install -r requirements-dev.txt`. Package AI dùng src layout và cài editable cho local; Docker có ba image, mỗi phần một Dockerfile với repository root làm build context. Backend vẫn cài package AI cho schema/citation; đây là mã dùng chung, chưa tách vòng phát hành độc lập hoàn toàn. Nginx proxy backend qua mạng web, backend gọi AI qua mạng intelligence bằng token. Chỉ frontend publish localhost:8080. Không cần chỉnh `PYTHONPATH`.
 
 ## Nối Firebase sau này
 
@@ -44,3 +44,9 @@ Các kiểm tra này chưa tự chứng minh mọi câu trong phần soạn là 
 ## Lịch sử
 
 SQLite có trigger chặn UPDATE/DELETE audit qua kết nối ứng dụng. Admin sở hữu file database vẫn có thể thay schema; đây không phải WORM. Audit lưu thay đổi metadata, trạng thái, revision và hash nội dung; chưa lưu diff chi tiết mọi đoạn trong editor. Nháp sửa tăng revision; sau nộp không sửa content tại chỗ. “Tạo bản sửa” tạo document ID mới trỏ parent_id và bỏ quyết định duyệt/export cũ.
+
+## Proxy và AI service
+
+Backend vẫn chỉ nhận demo identity từ loopback hoặc `X-Edumate-Proxy-Token` khớp cấu hình nội bộ. Nginx luôn ghi đè header này và xóa các header IP chuyển tiếp; backend chạy `--no-proxy-headers`. Token mẫu chỉ phục vụ Compose localhost, không thay Firebase Auth.
+
+AI service không có database/audit và chỉ nhận `POST /drafts` với `X-AI-Service-Token`. Timeout Gemini 45 giây, backend→AI 55 giây, Nginx→backend 65 giây. Backend giữ manual workflow khi AI ngừng chạy. Không thêm retry tự động để tránh gọi model lặp không kiểm soát.
