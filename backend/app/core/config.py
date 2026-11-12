@@ -16,4 +16,7 @@ def config() -> dict:
         ).split(',') if s.strip()],
         'gemini_key': os.getenv('GEMINI_API_KEY', ''),
         'gemini_model': os.getenv('GEMINI_MODEL', ''),
+        'ai_service_url': os.getenv('AI_SERVICE_URL', 'http://127.0.0.1:8001'),
+        'demo_allow_direct_access': os.getenv('DEMO_ALLOW_DIRECT_ACCESS', 'false').lower() == 'true',
+        'demo_proxy_token': os.getenv('DEMO_PROXY_TOKEN', ''),
     }

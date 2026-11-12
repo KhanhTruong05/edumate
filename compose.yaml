@@ -1,20 +1,60 @@
 services:
-  app:
+  frontend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: frontend/Dockerfile
     ports:
       - "127.0.0.1:${EDUMATE_PORT:-8080}:8080"
     environment:
+      DEMO_PROXY_TOKEN: "${DEMO_PROXY_TOKEN:-edumate-local-demo-proxy}"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - web
+    restart: unless-stopped
+    init: true
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+    environment:
       APP_MODE: demo
+      # Host traffic arrives through the Docker gateway; port is bound to localhost.
+      DEMO_ALLOW_DIRECT_ACCESS: "true"
       EDUMATE_DATA_DIR: /data
-      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
-      GEMINI_MODEL: "${GEMINI_MODEL:-}"
+      DEMO_PROXY_TOKEN: "${DEMO_PROXY_TOKEN:-edumate-local-demo-proxy}"
+      AI_SERVICE_URL: http://ai:8001
     volumes:
       - edumate_data:/data
+    networks:
+      - web
+      - intelligence
     restart: unless-stopped
     init: true
     stop_grace_period: 25s
+
+  ai:
+    build:
+      context: .
+      dockerfile: ai/Dockerfile
+    ports:
+      - "127.0.0.1:${AI_PORT:-8001}:8001"
+    environment:
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      GEMINI_MODEL: "${GEMINI_MODEL:-}"
+    networks:
+      - intelligence
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 25s
+
+networks:
+  web:
+  intelligence:
 
 volumes:
   edumate_data:
