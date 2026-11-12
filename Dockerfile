@@ -25,6 +25,8 @@ RUN apt-get update \
 WORKDIR /app/backend
 COPY backend/requirements-lock.txt ./requirements-lock.txt
 RUN python -m pip install --no-cache-dir -r requirements-lock.txt
+COPY --chown=edumate:edumate ai/ /app/ai/
+RUN python -m pip install --no-cache-dir --no-deps /app/ai
 COPY --chown=edumate:edumate backend/app/ ./app/
 COPY --chown=edumate:edumate docker/ /app/docker/
 COPY --from=frontend-build /build/frontend/dist/ /usr/share/nginx/html/

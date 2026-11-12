@@ -1,6 +1,14 @@
 # EduMate — Bộ khung mã nguồn
 
-Cập nhật: 06/11/2026. Đây là starter chạy cục bộ để xem cấu trúc code và tiếp tục phát triển; **chưa phải toàn bộ MVP trong kế hoạch đã hoàn thành**.
+Cập nhật: 12/11/2026. Code được chia thành **frontend**, **backend** và **AI package** để phát triển riêng từng phần trong cùng repository. Đây vẫn là starter chạy cục bộ; **chưa phải toàn bộ MVP trong kế hoạch đã hoàn thành**.
+
+| Phần | Trách nhiệm | Hướng dẫn |
+|---|---|---|
+| `frontend/` | Giao diện React, editor và gọi API | [Frontend](frontend/README.md) |
+| `backend/` | API, tài khoản, quyền, nghiệp vụ, database và audit | [Backend](backend/README.md) |
+| `ai/` | Gemini, prompt, schema đầu ra và kiểm tra citation | [AI](ai/README.md) |
+
+Frontend gọi backend; backend cấp nguồn đã kiểm tra quyền cho AI. AI hiện là package chạy cùng backend, chưa phải service HTTP riêng. **Database đang dùng là SQLite**. Firebase gồm Firestore (database), Auth (đăng nhập), Storage (file); phần tích hợp trong repo chưa được nối vào nghiệp vụ.
 
 ## Chạy nhanh bằng Docker
 
@@ -10,7 +18,7 @@ Mở Docker Desktop, chờ Engine sẵn sàng. Tại thư mục này:
 docker compose up --build -d
 ```
 
-Mở http://localhost:8080. Không cần cài Python/Node riêng, chưa cần key để dùng các luồng thủ công. Xem [hướng dẫn Docker](DOCKER_README.md) để cấu hình AI, đổi cổng và giữ dữ liệu. Bản đóng gói hiện mới kiểm tra Compose/build frontend/backend local; **chưa chạy container được vì Engine trên máy tạo gói không khởi động thành công**.
+Mở http://localhost:8080. Không cần cài Python/Node riêng, chưa cần key để dùng các luồng thủ công. Xem [hướng dẫn Docker](DOCKER_README.md) để cấu hình AI, đổi cổng và giữ dữ liệu. Sau refactor, kiểm tra Compose đạt nhưng **chưa xác nhận build/container runtime vì tải image nền bị timeout**; xem [kết quả kiểm tra](docs/VERIFICATION.md).
 
 ## 1. Cấu trúc
 
@@ -36,13 +44,18 @@ edumate/
 │   │       ├── auth/              # Danh tính demo
 │   │       ├── periods/           # Gia hạn theo người
 │   │       ├── documents/         # Soạn/lưu/nộp/sửa/duyệt
-│   │       ├── agent/             # Tools, Gemini, kiểm chứng nháp
+│   │       ├── agent/             # Cấp nguồn theo quyền, gọi AI, audit run
 │   │       ├── reports/           # Báo cáo và tính số liệu
 │   │       ├── audit/             # Đọc nhật ký theo quyền
 │   │       └── exports/           # Tạo DOCX và gắn đúng phiên bản
 │   ├── tests/                     # Kiểm thử nghiệp vụ và API
 │   ├── requirements.txt
 │   └── .env.example
+├── ai/                            # Package Python độc lập, không đọc database
+│   ├── src/edumate_ai/             # Provider Gemini, prompt, schema, citation
+│   ├── tests/                     # Kiểm thử AI không cần backend/key thật
+│   └── pyproject.toml
+├── requirements-dev.txt            # Cài dependency backend + AI local từ root
 ├── firebase/                      # Rules và cấu hình mẫu, chưa deploy
 ├── docker/                        # Nginx, supervisor và healthcheck
 ├── Dockerfile                     # Build frontend và gói runtime
@@ -60,13 +73,13 @@ Cần Python 3.11+ và Node.js 22.12+ hoặc 24+. Dùng pnpm 11; có thể dùng
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r backend\requirements-lock.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 Copy-Item backend\.env.example backend\.env
 Set-Location backend
 ..\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-Sau lần cài đầu, có thể dùng `scripts/Run-Backend.ps1`. Tệp `.env` do bạn tạo; đừng ghi đè nếu đã có cấu hình thật. Máy Linux/macOS dùng `.venv/bin/python` tương ứng.
+Lệnh cài phải chạy từ thư mục gốc `edumate`; nó cài dependency đã chốt của backend và package AI local ở chế độ editable. Sau lần cài đầu, có thể dùng `scripts/Run-Backend.ps1`. Tệp `.env` do bạn tạo; đừng ghi đè nếu đã có cấu hình thật. Máy Linux/macOS dùng `.venv/bin/python` tương ứng.
 
 ### Terminal 2 — frontend
 
@@ -111,7 +124,7 @@ GEMINI_API_KEY=đặt_khóa_của_bạn_tại_đây
 GEMINI_MODEL=ID_model_tài_khoản_được_cấp_quyền
 ```
 
-Khởi động lại backend. Không đặt khóa vào `frontend` hoặc biến `VITE_*`. Khi bấm sinh nháp, dữ liệu yêu cầu và nguồn đã chọn được gửi tới Gemini; chọn tài liệu giả lập/đã xử lý thông tin phù hợp để thử.
+Khởi động lại backend. Backend đọc cấu hình rồi truyền vào package `ai/`; không cần tiến trình hoặc `.env` AI riêng. Không đặt khóa vào `frontend` hoặc biến `VITE_*`. Khi bấm sinh nháp, dữ liệu yêu cầu và nguồn đã chọn được gửi tới Gemini; chọn tài liệu giả lập/đã xử lý thông tin phù hợp để thử.
 
 Thiếu cấu hình sẽ trả `AI_NOT_CONFIGURED`, không sinh nội dung mẫu giả làm AI. Kiểm thử dùng provider giả **chỉ trong test**, không thay thế Gemini trong giao diện. Chưa gọi Gemini thật khi bàn giao vì chưa có key/model người dùng.
 
@@ -146,6 +159,8 @@ Các loại “kế hoạch”, “giáo án”, “báo cáo văn bản” dùn
 ```powershell
 # Từ thư mục edumate
 Set-Location backend
+..\.venv\Scripts\python.exe -m pytest
+# Terminal khác, tại ai (kiểm thử AI độc lập)
 ..\.venv\Scripts\python.exe -m pytest
 # Terminal khác, tại frontend
 pnpm build

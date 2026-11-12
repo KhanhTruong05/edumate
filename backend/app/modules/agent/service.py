@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from app.core.clock import iso_now
 from app.core.errors import DomainError
-from app.domain.quality import verify_claims
+from edumate_ai import verify_claims
 from app.modules.agent.tools import collect_sources
 
 

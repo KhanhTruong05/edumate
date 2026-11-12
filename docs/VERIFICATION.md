@@ -1,5 +1,28 @@
 # Kết quả kiểm tra bộ khung
 
+## Refactor ba phần — 12/11/2026
+
+- Code AI chuyển sang package độc lập `ai/src/edumate_ai`; backend giữ quyền lấy nguồn, run/audit và chuyển lỗi về API cũ. Frontend không đổi API.
+- **24 test backend đạt**: 20 test workflow hiện có và 4 test lỗi upstream qua package thật, adapter và audit.
+- **13 test AI đạt**, gồm payload/schema Gemini, lỗi cấu hình/upstream và citation. Test dùng HTTP transport giả lập, không gọi Gemini thật.
+- Review độc lập xác nhận ranh giới package và phân quyền được giữ nguyên. Đã sửa thêm lỗi có sẵn khi Gemini trả envelope sai kiểu (`candidates: null` hoặc `parts: [null]`): test AI và API/audit tái hiện lỗi trước sửa, sau sửa trả `AI_UPSTREAM_ERROR` và lưu run thất bại.
+- Build wheel `edumate_ai-0.1.0-py3-none-any.whl` thành công; cài vào virtualenv riêng, không có backend, và chạy lại 13 test bằng `python -I` đạt.
+- `docker compose -p edumate-refactor-check config --quiet` đạt. Docker Engine có kết nối trong lượt này, nhưng build dừng khi tải image Node do Docker Hub TLS handshake timeout. **Chưa xác nhận image hoặc container runtime sau refactor**.
+- Frontend chưa build lại được: Corepack không tải được pnpm từ npm registry do timeout. Mã ứng dụng frontend không đổi; không coi kết quả build cũ là kiểm chứng mới.
+- Môi trường: Linux, Python 3.13.14, Node 24.18.1. Cài dependency từ `backend/requirements.txt` cho lần test này; FastAPI 0.162.5, Pydantic 2.14.3, httpx 0.28.1. Thử cài lại đúng lockfile qua `requirements-dev.txt` bị timeout ở PyPI/colorama, nên chưa xác nhận đủ phiên bản đã chốt trên môi trường này.
+- Backend có một cảnh báo deprecation từ Starlette TestClient/httpx, không có assertion lỗi. Firebase/Gemini thật chưa được gọi; database vẫn là SQLite.
+
+Lệnh tái hiện sau khi cài từ repository root bằng `python -m pip install -r requirements-dev.txt`:
+
+```sh
+cd backend
+../.venv/bin/python -m pytest
+cd ../ai
+../.venv/bin/python -m pytest
+```
+
+## Kiểm tra starter trước refactor
+
 Ngày: 06/11/2026. Chạy trên Windows, Python 3.11.9 và Node 24.22.1. Dependency backend được chốt trong requirements-lock.txt; frontend trong pnpm-lock.yaml.
 
 ## Đã chạy

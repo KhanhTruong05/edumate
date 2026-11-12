@@ -9,6 +9,11 @@ backend/.data/
 frontend/node_modules/
 frontend/dist/
 *.tsbuildinfo
+*.egg-info/
+ai/build/
+ai/dist/
+.superpowers/
+docs/superpowers/
 firebase-debug.log
 service-account*.json
 *credentials*.json

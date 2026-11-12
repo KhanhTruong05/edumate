@@ -5,6 +5,9 @@
 **/*.pyc
 **/node_modules
 **/dist
+**/build
+**/*.egg-info
+.superpowers
 **/.data
 **/.env
 **/.env.*

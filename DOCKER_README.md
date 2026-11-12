@@ -1,6 +1,6 @@
 # EduMate — Chạy bằng Docker
 
-Gói demo chạy frontend, FastAPI và Nginx trong một image, truy cập qua một cổng. Không cần cài riêng Python, Node hoặc pnpm trên máy người chạy.
+Gói demo chạy frontend, FastAPI, package AI và Nginx trong một image, truy cập qua một cổng. Code chia thành `frontend/`, `backend/`, `ai/`; AI được backend gọi trong cùng tiến trình. Không cần cài riêng Python, Node hoặc pnpm trên máy người chạy.
 
 ## 1. Điều kiện
 
@@ -77,7 +77,7 @@ Chạy `docker compose up -d` và mở http://localhost:8090. Frontend dùng `/a
 ## 6. Cấu trúc Docker
 
 ```text
-Dockerfile                 Node build React → Python runtime + Nginx
+Dockerfile                 Node build React → Python runtime + AI package + Nginx
 compose.yaml               Một service app, volume dữ liệu, publish localhost
 .dockerignore              Loại dependency local, cache, dữ liệu và .env khỏi build
 docker/nginx.conf          Static React + proxy API/docs/health sang loopback
@@ -89,7 +89,7 @@ FastAPI chỉ lắng nghe `127.0.0.1:8000` bên trong container. Nginx chuyển 
 
 ## 7. Kết quả kiểm tra của bản đóng gói
 
-Xem `docs/VERIFICATION.md`. Cấu hình Compose được kiểm tra bằng `docker compose config --quiet`. Máy tạo gói chưa khởi động được Docker Engine nên **chưa build/chạy image, chưa xác nhận healthcheck và volume trong container thực tế**. Các luồng ứng dụng local đã được kiểm tra riêng; không coi đó là kết quả test Docker.
+Xem `docs/VERIFICATION.md`. Sau refactor ngày 12/11/2026, cấu hình Compose đạt và Docker Engine kết nối được. Build bị chặn khi tải image nền từ Docker Hub do TLS timeout, nên **chưa build/chạy image, chưa xác nhận healthcheck và volume trong container thực tế**. Các kiểm thử backend và AI local đạt; không coi đó là kết quả test Docker.
 
 ## 8. Gửi cho bạn cùng nhóm
 

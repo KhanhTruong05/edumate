@@ -1,10 +1,13 @@
-# Hai người tiếp tục phát triển
+# Phân chia theo frontend, backend và AI
 
-| Người | Module / thư mục sở hữu | Việc tiếp theo |
+| Phần | Module / thư mục sở hữu | Việc tiếp theo |
 |---|---|---|
-| A | core, domain/policies, auth, periods, documents, audit, Firebase repository | Nối auth thật, Firestore transaction, thu hồi override, idempotency, quản trị kỳ và quyền |
-| B | agent, exports, reports, frontend editor, templates | Chạy thử Gemini thật, provenance run/version, import DOCX, mẫu docxtpl, hoàn thiện báo cáo tổ |
+| Frontend | `frontend/` | Giao diện đăng nhập, editor, quản trị kỳ, báo cáo và duyệt theo API |
+| Backend | `backend/`, `firebase/`, `templates/` | Nối auth thật, Firestore transaction, quyền, audit, exports, reports và cấp nguồn cho AI |
+| AI | `ai/` | Chạy thử Gemini thật, cải thiện prompt/schema/citation và chất lượng sinh nháp |
 
-Mỗi người làm cả UI và API cho phần mình. Chốt API schema khi đổi; chạy kiểm thử quyền, hạn, revision và số liệu khi thay repository. Không bỏ cơ chế chặn self-approval hoặc tự áp nội dung AI khi tích hợp cloud.
+Đây là ba phần code, không bắt buộc ba người hoặc ba service. Nếu có hai người, có thể phân một người backend, người còn lại frontend và AI. Chốt API schema khi đổi; chạy kiểm thử quyền, hạn, revision và số liệu khi thay repository. Không bỏ cơ chế chặn self-approval hoặc tự áp nội dung AI khi tích hợp cloud.
+
+Hợp đồng AI là `draft(kind, instructions, sources)` trả sections/claims/warnings và `verify_claims(claims, sources)` trả lỗi citation. Quyền lấy nguồn, run/version và audit do backend sở hữu; AI không truy cập database. Cấu hình Firebase chưa trở thành database thật trong lần refactor này.
 
 Bộ khung này là điểm bắt đầu; phạm vi soạn mới/editor/import/ký đã rộng hơn bản 10 ngày trước đó. Ước lượng lại trên các đầu việc còn thiếu trong README thay vì coi starter là hoàn thành toàn bộ kế hoạch.

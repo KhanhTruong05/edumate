@@ -3,17 +3,26 @@
 ## Hiện chạy cục bộ
 
 ```text
-React/Vite + Tiptap
-        → FastAPI API schemas / demo identity
+frontend/  React/Vite + Tiptap
+        → backend/  FastAPI API schemas / demo identity
         → Domain policies: quyền, hạn, revision, bất biến
         → SQLite transaction + audit
         → LocalStorage: tệp DOCX
 
-Agent: collect_sources theo quyền → Gemini REST → Pydantic → verify_claims
+backend agent: collect_sources theo quyền → ai/ edumate_ai → lưu run + audit
+ai package: Gemini REST → Pydantic schemas → verify_claims
 Reports: chọn bản mới nhất mỗi người → tính cùng tập nguồn hợp lệ → lưu snapshot
 ```
 
 `main.py` là composition root. Route chỉ nhận/validate dữ liệu và gọi service. Các kiểm tra nghiệp vụ dùng lại từ `domain`. Ghi trạng thái và audit trong cùng transaction SQLite; tệp được render ngoài transaction rồi gắn sau khi kiểm tra lại revision. Có thể có tệp mồ côi nếu render xong nhưng gắn thất bại; chưa có job dọn tệp.
+
+## Ba phần mã nguồn
+
+`frontend/` chỉ gọi backend. `backend/` quản lý dữ liệu, quyền và nghiệp vụ. `ai/` là package Python `edumate_ai`, chứa provider/prompt, schema đầu ra và kiểm tra citation; không import `app`, không đọc database hoặc biến môi trường.
+
+Backend giữ `modules/agent/tools.py` để lấy nguồn theo quyền, `service.py` để điều phối run/audit, `provider.py` làm adapter chuyển `AIError` thành `DomainError`. Cấu hình Gemini được đọc ở backend rồi truyền vào provider. API `/api/v1/agent/drafts` và luồng người duyệt giữ nguyên.
+
+Cài từ repository root bằng `pip install -r requirements-dev.txt`. Package AI dùng src layout và cài editable cho local; Docker cài package thường từ `/app/ai`. Không cần chỉnh `PYTHONPATH` hoặc chạy service AI riêng. Có thể kiểm thử/phát triển AI độc lập; nếu sau này cần service riêng thì thay adapter backend, không đưa quyền database vào AI.
 
 ## Nối Firebase sau này
 
